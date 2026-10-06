@@ -2,11 +2,12 @@
 <html lang="en">
     <head>
         <meta charset="UTF-8">
-        <title>__Introduction__ - </title>
+        <title></title>
         <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
         <meta name="description" content="">
         <meta name="viewport" content="width=device-width, initial-scale=1">
 
+        <base href="">
 
         <link rel="stylesheet" href="book.css">
         <link href="https://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800" rel="stylesheet" type="text/css">
@@ -62,7 +63,7 @@
         </script>
 
         <div id="sidebar" class="sidebar">
-            <ul class="chapter"><li class="affix"><a href="./introduction.html" class="active">Introduction</a></li><li class="spacer"></li><li class="affix"><a href="./chapter_1.html">Uncategorized CTFs Introduction</a></li><li><a href="./beginner.html"><strong>1.</strong> Beginner</a></li><li class="spacer"></li></ul>
+            <ul class="chapter"><li class="affix"><a href="./introduction.html">Introduction</a></li><li class="spacer"></li><li class="affix"><a href="./chapter_1.html">Uncategorized CTFs Introduction</a></li><li><a href="./beginner.html"><strong>1.</strong> Beginner</a></li><li class="spacer"></li></ul>
         </div>
 
         <div id="page-wrapper" class="page-wrapper">
@@ -85,7 +86,9 @@
                 </div>
 
                 <div id="content" class="content">
-                    <a class="header" href="./introduction.html#chapter-1" id="chapter-1"><h1>Chapter 1</h1></a>
+                    <a class="header" href="print.html#chapter-1" id="chapter-1"><h1>Chapter 1</h1></a>
+<a class="header" href="print.html#uncategorized-ctfs-introduction" id="uncategorized-ctfs-introduction"><h1>Uncategorized CTFs Introduction</h1></a>
+<a class="header" href="print.html#beginner" id="beginner"><h1>Beginner</h1></a>
 
                 </div>
 
@@ -93,19 +96,11 @@
                 
 
                 
-                    <a rel="next" href="./chapter_1.html" class="mobile-nav-chapters next" title="Next chapter">
-                        <i class="fa fa-angle-right"></i>
-                    </a>
-                
 
             </div>
 
             
 
-            
-                <a href="./chapter_1.html" class="nav-chapters next" title="You can navigate through the chapters using the arrow keys">
-                    <i class="fa fa-angle-right"></i>
-                </a>
             
 
         </div>
@@ -125,6 +120,12 @@
 
         
 
+        
+        <script>
+            $(document).ready(function() {
+                window.print();
+            })
+        </script>
         
 
         <script src="highlight.js"></script>
