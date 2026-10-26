@@ -63,7 +63,7 @@
         </script>
 
         <div id="sidebar" class="sidebar">
-            <ul class="chapter"><li class="affix"><a href="./introduction.html">Introduction</a></li><li class="spacer"></li><li class="affix"><a href="./chapter_1.html">Uncategorized CTFs Introduction</a></li><li><a href="./beginner.html"><strong>1.</strong> Beginner</a></li><li class="spacer"></li></ul>
+            <ul class="chapter"><li class="affix"><a href="./introduction.html">Introduction</a></li><li class="spacer"></li><li class="affix"><a href="./uncat_intro.html">Uncategorized CTFs Introduction</a></li><li class="affix"><a href="./beginner.html">Beginner</a></li><li class="spacer"></li></ul>
         </div>
 
         <div id="page-wrapper" class="page-wrapper">
@@ -88,7 +88,150 @@
                 <div id="content" class="content">
                     <a class="header" href="print.html#chapter-1" id="chapter-1"><h1>Chapter 1</h1></a>
 <a class="header" href="print.html#uncategorized-ctfs-introduction" id="uncategorized-ctfs-introduction"><h1>Uncategorized CTFs Introduction</h1></a>
-<a class="header" href="print.html#beginner" id="beginner"><h1>Beginner</h1></a>
+<a class="header" href="print.html#ctf-writeup-beginner" id="ctf-writeup-beginner"><h1>CTF Writeup: Beginner</h1></a>
+<p>A writeup for the CTF titled beginner.
+https://ctftime.org/task/12813</p>
+<hr />
+<a class="header" href="print.html#table-of-contents" id="table-of-contents"><h2>Table of Contents</h2></a>
+<ul>
+<li><a href="print.html#overview">Overview</a></li>
+<li><a href="print.html#security-considerations">Security Considerations</a></li>
+<li><a href="print.html#initial-reconnaissance">Initial Reconnaissance</a></li>
+<li><a href="print.html#static-analysis">Static Analysis</a></li>
+<li><a href="print.html#dynamic-analysis">Dynamic Analysis</a></li>
+<li><a href="print.html#findings">Findings</a></li>
+<li><a href="print.html#exploitation">Exploitation</a></li>
+<li><a href="print.html#conclusion">Conclusion</a></li>
+</ul>
+<hr />
+<a class="header" href="print.html#overview" id="overview"><h2>Overview</h2></a>
+<p>Beginner is a CTF from Google's 2020 CTF event.
+I am doing this CTF as part of my effort to progress as a security researcher.
+This is the start of my journey as a Junior Security Researcher. I am approaching this with the methodology
+reflected in the Table of Contents.</p>
+<p>I will be running this binary via docker and utilizing binary ninja for static analysis.
+Dynamic analysis will be done via GDB and potentially other tools.</p>
+<a class="header" href="print.html#security-considerations" id="security-considerations"><h2>Security Considerations</h2></a>
+<p>The first thing I decided to do was check security settings on the binary after determining it was an ELF.</p>
+<p><strong>Checksec</strong></p>
+<p><img src="img_1.png" alt="img_1.png" /></p>
+<p>Pwntools' Checksec shows <code>Partial RELRO</code>, <code>NX enabled</code>, and <code>PIE enabled</code>.</p>
+<ul>
+<li>The <code>Arch</code> lets me know that I will be looking at AMD 64 assembly during static analysis.
+This is also a general consideration for the system this program is designed
+to run on. Furthermore, this clues me into various considerations if I were to emulate the program,
+such as if the program was MIPS.</li>
+<li><code>Partial RELRO</code> tells me that the GOT can still be overwritten with the right
+vulnerability and is not set as read-only.</li>
+<li>Since there is no <code>Stack Canary</code> I won't have to worry about that if I find an overflow vulnerability.</li>
+<li><code>NX</code> means that the stack is non-executable. This lets me know that if I achieve a stack-based
+overflow, I will not be able to have my shellcode run off of the stack.
+Instead, I would need to return to somewhere else that is executable and that holds my
+shellcode.</li>
+<li><code>PIE</code> being enabled makes is it so that the program will shift around in memory given that
+ASLR is typically enabled on hosts. If this was a standalone device, that'd be different.
+This tells me that any productized exploit will need to ask for the starting address and
+operate off of known offsets between if so required.</li>
+<li>Due to the <code>RUNPATH</code> being set to the . directory, replacing libraries with malicious
+ones would likely be a viable vulnerability. Some form of library hijacking should work.</li>
+<li>Since the file is not <code>Stripped</code>, static analysis will be easier and potentially more fruitful.</li>
+</ul>
+<hr />
+<a class="header" href="print.html#initial-reconnaissance" id="initial-reconnaissance"><h2>Initial Reconnaissance</h2></a>
+<ul>
+<li>
+<p>The binary is dynamically linked.</p>
+</li>
+<li>
+<p>After running strings -n 6 beginner:
+<img src="img_2.png" alt="img_2.png" />
+The first strings are interesting but everything else just seems to be symbols.
+[]A\A]A^A_ is not the flag.</p>
+</li>
+<li>
+<p>When you run the program you are prompted for the flag. Initial overflow attempts don't seem to work
+(I tried much longer strings than in the screenshot).
+<img src="img_3.png" alt="img_3.png" /></p>
+</li>
+<li>
+<p><code>ld-linux-x86-64.so.2</code> and <code>libc.so.6</code> are in the binary's folder. The images below show that while
+the libc.so.6 provided is being used by the program, the linker provided is not being used. Instead, my local
+linker is being used. We can also see that the address are different with each run of <code>ldd</code>, confirming that ASLR
+is active.
+<img src="img_4.png" alt="img_4.png" />
+<img src="img_5.png" alt="img_5.png" /></p>
+</li>
+</ul>
+<hr />
+<a class="header" href="print.html#static-analysis" id="static-analysis"><h2>Static Analysis</h2></a>
+<p>The following are the notes and results of my static analysis utilizing Binary Ninja.</p>
+<p><strong>Points of Interest:</strong></p>
+<ul>
+<li>The user input stored in <code>var_38</code> goes through a series of changes.
+<pre><code class="language-c">004010be  660f380005a92f00   pshufb  xmm0, xmmword [rel SHUFFLE]
+004010c7  660ffe05912f0000   paddd   xmm0, xmmword [rel ADD32]
+004010cf  660fef05792f0000   pxor    xmm0, xmmword [rel XOR]
+</code></pre>
+After looking further, static values seem to be assigned to <code>SHUFFLE</code>, <code>ADD32</code>, and <code>XOR</code>
+<img src="img_7.png" alt="img_7.png" /></li>
+<li><code>var_38</code> is the original input and <code>var_28</code> is the result of the <code>SHUFFLE</code>, <code>ADD32</code>, and <code>XOR</code>.
+Below is the first check that happens for validating input, which shows that after all the operations, all characters (0x10)
+of the original input are supposed to remain the same.
+<pre><code class="language-c">int32_t rax_2 = strncmp(&amp;var_38, &amp;var_28, 0x10);
+</code></pre>
+</li>
+<li>After <code>rax_2</code> is checked for success of the previous call, <code>result_1</code> is set to check if our <code>var_28</code> starts with <code>CTF{</code>
+<pre><code class="language-c">if (!rax_2)
+{
+    result_1 = strncmp(&amp;var_28, EXPECTED_PREFIX, 4);
+    result = result_1;
+}
+</code></pre>
+</li>
+<li>At this point, our previous two <code>strncmp</code> calls are being checked for success.
+As long as the previous two calls returned 0, the program should print and return success (0).
+<pre><code class="language-c">if (!rax_2 &amp;&amp; !result_1)
+    puts(&quot;SUCCESS&quot;);
+</code></pre>
+</li>
+<li>Notes: <br>
+<ul>
+<li>It appears that in order to pass all the checks, the user's input should be a string
+that starts with <code>CTF{</code>, is less than or equal to <code>15 characters</code>, and remain the exact same
+after <code>SHUFFLE</code>, <code>ADD32</code>, and <code>XOR</code>.</li>
+<li><code>SHUFFLE</code> Before jumping into Dynamic Analysis if needed, I will attempt to figure out what inputs would survive
+the operations mentioned above. Below is a table, given the <code>SHUFFLE</code> mask, of the expected
+placement of each byte after the <code>SHUFFLE</code>.
+<img src="img_6.png" alt="img_6.png" /></li>
+<li><code>ADD32</code></li>
+<li><code>XOR</code></li>
+</ul>
+</li>
+</ul>
+<hr />
+<a class="header" href="print.html#dynamic-analysis" id="dynamic-analysis"><h2>Dynamic Analysis</h2></a>
+<p><strong>Server/Client:</strong></p>
+<ul>
+<li><code>Ca</code> - If</li>
+</ul>
+<hr />
+<a class="header" href="print.html#findings" id="findings"><h2>Findings</h2></a>
+<p><strong>Server/Client:</strong></p>
+<ul>
+<li><code>Li</code> (version: 0.0.1):</li>
+</ul>
+<a class="header" href="print.html#exploitation" id="exploitation"><h3>Exploitation</h3></a>
+<p><strong>Server/Client:</strong></p>
+<ul>
+<li><code>M</code> Se</li>
+</ul>
+<hr />
+<a class="header" href="print.html#conclusion" id="conclusion"><h2>Conclusion</h2></a>
+<p>Generative AI was used for:</p>
+<ul>
+<li><code>Debugging</code> Print</li>
+</ul>
+<hr />
 
                 </div>
 
