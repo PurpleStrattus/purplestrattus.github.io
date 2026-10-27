@@ -35,7 +35,7 @@
             const path_to_root = "";
             const default_light_theme = "ayu";
             const default_dark_theme = "ayu";
-            window.path_to_searchindex_js = "searchindex-4bc4fb0f.js";
+            window.path_to_searchindex_js = "searchindex-9ea5f407.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-ab459e31.js"></script>
@@ -316,7 +316,10 @@ Perhaps <code>CTF{</code> survives the operations. I can check in GDB or just us
 <li>There are automated tools like Angr or Z3 that should be able to solve this automatically.</li>
 <li>Alternatively I could write a script that A mimics the exact string transformation.
 The script would start by taking iterating through each ascii character (Assuming the flag is in ASCII).
-It would add that character onto the CTF{ and run the algorithm. Then check to see if the</li>
+It would figure out what index shuffle would swap it to, add the byte from that corresponding index in the
+add32 mask, and then xor it with the corresponding index in the xor mask. From there, we can see
+if the value has change from the original value, or remained the same. If it remained the same, its a
+piece of the puzzle. Maybe.</li>
 </ul>
 <hr>
 <h2 id="dynamic-analysis"><a class="header" href="#dynamic-analysis">Dynamic Analysis</a></h2>
