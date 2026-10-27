@@ -36,7 +36,7 @@
             const path_to_root = "";
             const default_light_theme = "ayu";
             const default_dark_theme = "ayu";
-            window.path_to_searchindex_js = "searchindex-c769ac7f.js";
+            window.path_to_searchindex_js = "searchindex-9ea5f407.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-ab459e31.js"></script>
@@ -296,9 +296,33 @@ after <code>SHUFFLE</code>, <code>ADD32</code>, and <code>XOR</code>.</li>
 <li><code>SHUFFLE</code> Before jumping into Dynamic Analysis if needed, I will attempt to figure out what inputs would survive
 the operations mentioned above. Below is a table, given the <code>SHUFFLE</code> mask, of the expected
 placement of each byte after the <code>SHUFFLE</code>.
-<label class="checkbox-label"><input class="checkbox-img" type="checkbox"><img src="img_6.png" alt="img_6.png"><span class="img-wrapper"><img src="img_6.png" alt="img_6.png"></span></label></li>
-<li><code>ADD32</code></li>
-<li><code>XOR</code></li>
+<label class="checkbox-label"><input class="checkbox-img" type="checkbox"><img src="img_6.png" alt="img_6.png"><span class="img-wrapper"><img src="img_6.png" alt="img_6.png"></span></label>
+<br>
+<br></li>
+<li><code>ADD32</code> Initially this appears to take four 32 byte sections from the data stored.
+Then, it adds each section of its mask to a four byte section of the string being operated on.
+If you swap the endianness, the mask<code>ef be ad de ad de e1 fe 37 13 37 13 66 74 63 67</code>
+becomes <code>0xDEADBEEF</code>, <code>0xFEE1DEAD</code>, <code>0x13371337</code>, <code>0x67637466</code>.
+<br>
+<br></li>
+<li><code>XOR</code> The string will finally be XORed with <code>78 58 b4 49 8d 1a 5f 38 d4 23 f8 34 eb 86 f9 aa</code>.
+This will take the string and mask, and compare each bit. Resulting in a new string.</li>
+</ul>
+<h4 id="thoughts"><a class="header" href="#thoughts">Thoughts</a></h4>
+<ul>
+<li>The new string gets checked against the original user input, which appears to need to be the same. Is there
+such things a string that doesn’t change even after all those operations? Perhaps it’d be of use
+to make a Python script that does the conversion.</li>
+<li>Somehow <code>CTF{</code> needs to end up being the first 4 bytes of the input string and output?
+Perhaps <code>CTF{</code> survives the operations. I can check in GDB or just use a Python script.</li>
+<li>After doing some googling, I think there’s a way to reverse this using that given masks.</li>
+<li>There are automated tools like Angr or Z3 that should be able to solve this automatically.</li>
+<li>Alternatively I could write a script that A mimics the exact string transformation.
+The script would start by taking iterating through each ascii character (Assuming the flag is in ASCII).
+It would figure out what index shuffle would swap it to, add the byte from that corresponding index in the
+add32 mask, and then xor it with the corresponding index in the xor mask. From there, we can see
+if the value has change from the original value, or remained the same. If it remained the same, its a
+piece of the puzzle. Maybe.</li>
 </ul>
 <hr>
 <h2 id="dynamic-analysis"><a class="header" href="#dynamic-analysis">Dynamic Analysis</a></h2>
