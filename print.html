@@ -3,7 +3,7 @@
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
-        <title>VR &amp; RE CTF Portfolio and Journey</title>
+        <title>VR &amp; RE Projects, CTFs, and Blog Posts</title>
         <meta name="robots" content="noindex">
 
 
@@ -36,10 +36,10 @@
             const path_to_root = "";
             const default_light_theme = "ayu";
             const default_dark_theme = "ayu";
-            window.path_to_searchindex_js = "searchindex-9ea5f407.js";
+            window.path_to_searchindex_js = "searchindex-62e4a028.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="toc-ab459e31.js"></script>
+        <script src="toc-b386875a.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -138,7 +138,7 @@
                         </button>
                     </div>
 
-                    <h1 class="menu-title">VR &amp; RE CTF Portfolio and Journey</h1>
+                    <h1 class="menu-title">VR &amp; RE Projects, CTFs, and Blog Posts</h1>
 
                     <div class="right-buttons">
                         <a href="print.html" title="Print this book" aria-label="Print this book">
@@ -175,7 +175,10 @@
 
                 <div id="mdbook-content" class="content">
                     <main>
-                        <h1 id="chapter-1"><a class="header" href="#chapter-1">Chapter 1</a></h1>
+                        <h1 id="introduction"><a class="header" href="#introduction">Introduction</a></h1>
+<p>sdafasfasf</p>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="uncategorized-ctfs-introduction"><a class="header" href="#uncategorized-ctfs-introduction">Uncategorized CTFs Introduction</a></h1>
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="ctf-writeup-beginner"><a class="header" href="#ctf-writeup-beginner">CTF Writeup: Beginner</a></h1>
 <p>A writeup for the CTF titled beginner.
@@ -254,7 +257,7 @@ is active.
 <hr>
 <h2 id="static-analysis"><a class="header" href="#static-analysis">Static Analysis</a></h2>
 <p>The following are the notes and results of my static analysis utilizing Binary Ninja.</p>
-<h4 id="points-of-interest"><a class="header" href="#points-of-interest">Points of Interest:</a></h4>
+<h4 id="points-of-interest"><a class="header" href="#points-of-interest">Points of Interest</a></h4>
 <ul>
 <li>The user input stored in <code>var_38</code> goes through a series of changes.
 <pre><code class="language-c">004010be  660f380005a92f00   pshufb  xmm0, xmmword [rel SHUFFLE]
@@ -316,20 +319,17 @@ to make a Python script that does the conversion.</li>
 <li>Somehow <code>CTF{</code> needs to end up being the first 4 bytes of the input string and output?
 Perhaps <code>CTF{</code> survives the operations. I can check in GDB or just use a Python script.</li>
 <li>After doing some googling, I think there’s a way to reverse this using that given masks.</li>
-<li>There are automated tools like Angr or Z3 that should be able to solve this automatically.</li>
+<li>There are automated tools like <code>Angr</code> or <code>Z3</code> that should be able to solve this automatically.</li>
 <li>Alternatively I could write a script that A mimics the exact string transformation.
 The script would start by taking iterating through each ascii character (Assuming the flag is in ASCII).
 It would figure out what index shuffle would swap it to, add the byte from that corresponding index in the
 add32 mask, and then xor it with the corresponding index in the xor mask. From there, we can see
-if the value has change from the original value, or remained the same. If it remained the same, its a
+if the value has changed from the original value, or remained the same. If it remained the same, it’s a
 piece of the puzzle. Maybe.</li>
 </ul>
 <hr>
 <h2 id="dynamic-analysis"><a class="header" href="#dynamic-analysis">Dynamic Analysis</a></h2>
-<p><strong>Server/Client:</strong></p>
-<ul>
-<li><code>Ca</code> - If</li>
-</ul>
+<p><strong>Not Needed/Skipped</strong></p>
 <hr>
 <h2 id="findings"><a class="header" href="#findings">Findings</a></h2>
 <p><strong>Server/Client:</strong></p>
@@ -348,7 +348,9 @@ piece of the puzzle. Maybe.</li>
 <ul>
 <li><code>Debugging</code> Print</li>
 </ul>
-<hr>
+<hr><div style="break-before: page; page-break-before: always;"></div>
+<h1 id="chapter-1"><a class="header" href="#chapter-1">Chapter 1</a></h1>
+
                     </main>
 
                     <nav class="nav-wrapper" aria-label="Page navigation">
