@@ -3,7 +3,7 @@
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
-        <title>Beginner - VR &amp; RE CTF Portfolio and Journey</title>
+        <title>Beginner - VR &amp; RE Projects, CTFs, and Blog Posts</title>
 
 
         <!-- Custom HTML head -->
@@ -35,10 +35,10 @@
             const path_to_root = "";
             const default_light_theme = "ayu";
             const default_dark_theme = "ayu";
-            window.path_to_searchindex_js = "searchindex-9ea5f407.js";
+            window.path_to_searchindex_js = "searchindex-62e4a028.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="toc-ab459e31.js"></script>
+        <script src="toc-b386875a.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -137,7 +137,7 @@
                         </button>
                     </div>
 
-                    <h1 class="menu-title">VR &amp; RE CTF Portfolio and Journey</h1>
+                    <h1 class="menu-title">VR &amp; RE Projects, CTFs, and Blog Posts</h1>
 
                     <div class="right-buttons">
                         <a href="print.html" title="Print this book" aria-label="Print this book">
@@ -251,7 +251,7 @@ is active.
 <hr>
 <h2 id="static-analysis"><a class="header" href="#static-analysis">Static Analysis</a></h2>
 <p>The following are the notes and results of my static analysis utilizing Binary Ninja.</p>
-<h4 id="points-of-interest"><a class="header" href="#points-of-interest">Points of Interest:</a></h4>
+<h4 id="points-of-interest"><a class="header" href="#points-of-interest">Points of Interest</a></h4>
 <ul>
 <li>The user input stored in <code>var_38</code> goes through a series of changes.
 <pre><code class="language-c">004010be  660f380005a92f00   pshufb  xmm0, xmmword [rel SHUFFLE]
@@ -313,20 +313,17 @@ to make a Python script that does the conversion.</li>
 <li>Somehow <code>CTF{</code> needs to end up being the first 4 bytes of the input string and output?
 Perhaps <code>CTF{</code> survives the operations. I can check in GDB or just use a Python script.</li>
 <li>After doing some googling, I think there’s a way to reverse this using that given masks.</li>
-<li>There are automated tools like Angr or Z3 that should be able to solve this automatically.</li>
+<li>There are automated tools like <code>Angr</code> or <code>Z3</code> that should be able to solve this automatically.</li>
 <li>Alternatively I could write a script that A mimics the exact string transformation.
 The script would start by taking iterating through each ascii character (Assuming the flag is in ASCII).
 It would figure out what index shuffle would swap it to, add the byte from that corresponding index in the
 add32 mask, and then xor it with the corresponding index in the xor mask. From there, we can see
-if the value has change from the original value, or remained the same. If it remained the same, its a
+if the value has changed from the original value, or remained the same. If it remained the same, it’s a
 piece of the puzzle. Maybe.</li>
 </ul>
 <hr>
 <h2 id="dynamic-analysis"><a class="header" href="#dynamic-analysis">Dynamic Analysis</a></h2>
-<p><strong>Server/Client:</strong></p>
-<ul>
-<li><code>Ca</code> - If</li>
-</ul>
+<p><strong>Not Needed/Skipped</strong></p>
 <hr>
 <h2 id="findings"><a class="header" href="#findings">Findings</a></h2>
 <p><strong>Server/Client:</strong></p>
@@ -350,10 +347,13 @@ piece of the puzzle. Maybe.</li>
 
                     <nav class="nav-wrapper" aria-label="Page navigation">
                         <!-- Mobile navigation buttons -->
-                            <a rel="prev" href="introduction.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                            <a rel="prev" href="uncat_intro.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                                 <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M41.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.3 256 246.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/></svg></span>
                             </a>
 
+                            <a rel="next prefetch" href="chapter_1.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z"/></svg></span>
+                            </a>
 
                         <div style="clear: both"></div>
                     </nav>
@@ -361,10 +361,13 @@ piece of the puzzle. Maybe.</li>
             </div>
 
             <nav class="nav-wide-wrapper" aria-label="Page navigation">
-                    <a rel="prev" href="introduction.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                    <a rel="prev" href="uncat_intro.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                         <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M41.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.3 256 246.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/></svg></span>
                     </a>
 
+                    <a rel="next prefetch" href="chapter_1.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z"/></svg></span>
+                    </a>
             </nav>
 
         </div>
