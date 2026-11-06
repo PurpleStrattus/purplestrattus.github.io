@@ -35,7 +35,7 @@
             const path_to_root = "";
             const default_light_theme = "ayu";
             const default_dark_theme = "ayu";
-            window.path_to_searchindex_js = "searchindex-62e4a028.js";
+            window.path_to_searchindex_js = "searchindex-9d1a7442.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-b386875a.js"></script>
@@ -198,17 +198,17 @@ reflected in the Table of Contents.</p>
 <p>I will be running this binary via docker and utilizing binary ninja for static analysis.
 Dynamic analysis will be done via GDB and potentially other tools.</p>
 <h2 id="security-considerations"><a class="header" href="#security-considerations">Security Considerations</a></h2>
-<p>The first thing I decided to do was check security settings on the binary after determining it was an ELF.</p>
+<p>The first thing I decided to do was check security settings on the binary, after determining it was an ELF.</p>
 <p><strong>Checksec</strong></p>
 <p><label class="checkbox-label"><input class="checkbox-img" type="checkbox"><img src="img_1.png" alt="img_1.png"><span class="img-wrapper"><img src="img_1.png" alt="img_1.png"></span></label></p>
 <p>Pwntools’ Checksec shows <code>Partial RELRO</code>, <code>NX enabled</code>, and <code>PIE enabled</code>.</p>
 <ul>
 <li>The <code>Arch</code> lets me know that I will be looking at AMD 64 assembly during static analysis.
 This is also a general consideration for the system this program is designed
-to run on. Furthermore, this clues me into various considerations if I were to emulate the program,
+to run on. Furthermore, this clues me into various considerations, if I were to emulate the program,
 such as if the program was MIPS.</li>
 <li><code>Partial RELRO</code> tells me that the GOT can still be overwritten with the right
-vulnerability and is not set as read-only.</li>
+vulnerability, and it is not set as read-only.</li>
 <li>Since there is no <code>Stack Canary</code> I won’t have to worry about that if I find an overflow vulnerability.</li>
 <li><code>NX</code> means that the stack is non-executable. This lets me know that if I achieve a stack-based
 overflow, I will not be able to have my shellcode run off of the stack.
@@ -218,12 +218,14 @@ shellcode.</li>
 ASLR is typically enabled on hosts. If this was a standalone device, that’d be different.
 This tells me that any productized exploit will need to ask for the starting address and
 operate off of known offsets between if so required.</li>
-<li>Due to the <code>RUNPATH</code> being set to the . directory, replacing libraries with malicious
+<li>Due to the <code>RUNPATH</code> being set to the <code>.</code> directory, replacing libraries with malicious
 ones would likely be a viable vulnerability. Some form of library hijacking should work.</li>
 <li>Since the file is not <code>Stripped</code>, static analysis will be easier and potentially more fruitful.</li>
 </ul>
 <hr>
 <h2 id="initial-reconnaissance"><a class="header" href="#initial-reconnaissance">Initial Reconnaissance</a></h2>
+<p>The following are results of running through some quick initial checks on the binary to get a better
+idea of the binary and potentially catch any super low-hanging fruit.</p>
 <ul>
 <li>
 <p>The binary is dynamically linked.</p>
@@ -253,7 +255,7 @@ is active.
 <p>The following are the notes and results of my static analysis utilizing Binary Ninja.</p>
 <h4 id="points-of-interest"><a class="header" href="#points-of-interest">Points of Interest</a></h4>
 <ul>
-<li>The user input stored in <code>var_38</code> goes through a series of changes.
+<li>The user input stored in <code>var_38</code> goes through a series of notable changes.
 <pre><code class="language-c">004010be  660f380005a92f00   pshufb  xmm0, xmmword [rel SHUFFLE]
 004010c7  660ffe05912f0000   paddd   xmm0, xmmword [rel ADD32]
 004010cf  660fef05792f0000   pxor    xmm0, xmmword [rel XOR]
@@ -262,11 +264,11 @@ After looking further, static values seem to be assigned to <code>SHUFFLE</code>
 <label class="checkbox-label"><input class="checkbox-img" type="checkbox"><img src="img_7.png" alt="img_7.png"><span class="img-wrapper"><img src="img_7.png" alt="img_7.png"></span></label></li>
 <li><code>var_38</code> is the original input and <code>var_28</code> is the result of the <code>SHUFFLE</code>, <code>ADD32</code>, and <code>XOR</code>.
 Below is the first check that happens for validating input, which shows that after all the operations, all characters (0x10)
-of the original input are supposed to remain the same.
+of the original input is supposed to remain the same.
 <pre><code class="language-c">int32_t rax_2 = strncmp(&amp;var_38, &amp;var_28, 0x10);
 </code></pre>
 </li>
-<li>After <code>rax_2</code> is checked for success of the previous call, <code>result_1</code> is set to check if our <code>var_28</code> starts with <code>CTF{</code>
+<li>After <code>rax_2</code> is checked for success on the previous call, <code>result_1</code> is set to check if our <code>var_28</code> starts with <code>CTF{</code>
 <pre><code class="language-c">if (!rax_2)
 {
     result_1 = strncmp(&amp;var_28, EXPECTED_PREFIX, 4);
@@ -283,7 +285,7 @@ As long as the previous two calls returned 0, the program should print and retur
 <li>Notes: <br>
 <ul>
 <li>It appears that in order to pass all the checks, the user’s input should be a string
-that starts with <code>CTF{</code>, is less than or equal to <code>15 characters</code>, and remain the exact same
+that starts with <code>CTF{</code>, is less than or equal to <code>15 characters</code>, and remains the exact same
 after <code>SHUFFLE</code>, <code>ADD32</code>, and <code>XOR</code>.</li>
 </ul>
 </li>
@@ -308,40 +310,284 @@ This will take the string and mask, and compare each bit. Resulting in a new str
 <h4 id="thoughts"><a class="header" href="#thoughts">Thoughts</a></h4>
 <ul>
 <li>The new string gets checked against the original user input, which appears to need to be the same. Is there
-such things a string that doesn’t change even after all those operations? Perhaps it’d be of use
-to make a Python script that does the conversion.</li>
+such thing as a string that doesn’t change even after all those operations? Perhaps it’d be of use
+to make a Python script that does the conversion automatically.</li>
 <li>Somehow <code>CTF{</code> needs to end up being the first 4 bytes of the input string and output?
 Perhaps <code>CTF{</code> survives the operations. I can check in GDB or just use a Python script.</li>
-<li>After doing some googling, I think there’s a way to reverse this using that given masks.</li>
+<li>After doing some googling, I think there’s a way to reverse this using the given masks.</li>
 <li>There are automated tools like <code>Angr</code> or <code>Z3</code> that should be able to solve this automatically.</li>
-<li>Alternatively I could write a script that A mimics the exact string transformation.
-The script would start by taking iterating through each ascii character (Assuming the flag is in ASCII).
-It would figure out what index shuffle would swap it to, add the byte from that corresponding index in the
-add32 mask, and then xor it with the corresponding index in the xor mask. From there, we can see
+<li>Alternatively I could write a script that mimics the exact string transformation.
+The script would start by iterating through each ascii character (Assuming the flag is in ASCII).
+It would figure out what index that <code>SHUFFLE</code> would swap the given char to, add the byte from that
+corresponding index in the add32 mask, and then xor it with the corresponding index in the xor mask. From there, we can see
 if the value has changed from the original value, or remained the same. If it remained the same, it’s a
-piece of the puzzle. Maybe.</li>
+piece of the puzzle. Maybe. The issue is trying to account for the 32 bit blocks.</li>
 </ul>
 <hr>
 <h2 id="dynamic-analysis"><a class="header" href="#dynamic-analysis">Dynamic Analysis</a></h2>
 <p><strong>Not Needed/Skipped</strong></p>
+<ul>
+<li>In hindsight, it wouldn’t have hurt to see what <code>xmm0</code> looked like after putting values in.</li>
+</ul>
 <hr>
 <h2 id="findings"><a class="header" href="#findings">Findings</a></h2>
-<p><strong>Server/Client:</strong></p>
+<h4 id="route-to-solution"><a class="header" href="#route-to-solution">Route to Solution</a></h4>
 <ul>
-<li><code>Li</code> (version: 0.0.1):</li>
+<li>After trying to write a script that manually did all the transformations, I realized that it would
+be easier to utilize <code>Z3</code> to solve this issue. So, I decided to dive into <code>Z3</code> a bit. The stumbling block
+that I faced was trying to do the <code>ADD32</code> operation on a single character while accounting for the 32-Bit
+Block. In hindsight, it may have not been too difficult to perform that operation properly without <code>Z3</code>.</li>
+<li>The python Z3 library lets you effectively turn bit operations and complex calculations into an
+equation and then automatically solve it. So, you have to input all the constraints, variables, etc..</li>
+<li>It has become clear that to find the solution, I must:
+<ul>
+<li>Take an <code>ASCII</code> character and shuffle it with the <code>SHUFFLE_MASK</code></li>
+<li>Place the potential character into a <code>32 bit block</code> that allows for overflow
+(Python variables don’t normally allow for overflow)</li>
+<li>Perform the <code>ADD32</code> operation on the 32 bit block utilizing the corresponding 32 bit block out
+of the 4 that are provided in the binary</li>
+<li><code>XOR</code> the character with the value in the corresponding place in the <code>XOR_MASK</code> (Ima just call it a mask)</li>
+<li>Check to see if the value of the <code>ASCII</code> character has changed from the original</li>
+</ul>
+</li>
+<li>The flag starts with <code>CTF{</code> and ends with <code>\0</code>.</li>
 </ul>
 <hr>
 <h2 id="exploitation"><a class="header" href="#exploitation">Exploitation</a></h2>
-<p><strong>Server/Client:</strong></p>
+<p>Below is the finished <code>Z3</code> script broken down an explained in detail.</p>
+<h4 id="solve-script-breakdown"><a class="header" href="#solve-script-breakdown">Solve Script Breakdown</a></h4>
 <ul>
-<li><code>M</code> Se</li>
+<li>The first part of the script imports the things we are going to use from Z3. As we go along, I will explain
+what each import is. It’s important to note, that Z3 keeps tracks of operations involving its own library and datatypes.
+Z3 will track all the math and operations we are doing with its objects and store them.
+<ul>
+<li>
+<pre><code class="language-python">from z3 import BitVec, BitVecVal, Concat, Extract, Solver, Or, sat
+
+MAX_FLAG_LEN = 16
+CHUNK_SIZE= 4
+XOR_MASK = [0x76, 0x58, 0xb4, 0x49, 0x8d, 0x1a, 0x5f, 0x38, 0xd4, 0x23, 0xf8, 0x34, 0xeb, 0x86, 0xf9, 0xaa]
+ADD32_VALUES = [0xef, 0xbe, 0xad, 0xde, 0xad, 0xde, 0xe1, 0xfe, 0x37, 0x13, 0x37, 0x13, 0x66, 0x74, 0x63, 0x67]
+SHUFFLE_MASK = [0x02, 0x06, 0x07, 0x01, 0x05, 0x0b, 0x09, 0x0e, 0x03, 0x0f, 0x04, 0x08, 0x0a, 0x0c, 0x0d, 0x00]
+
+def solver_builder():
+    beginner_flag = [BitVec(f"f{i}", 8) for i in range(MAX_FLAG_LEN)]
+    beginner_solver = Solver()
+</code></pre>
+</li>
+</ul>
+</li>
+<li>Starting out, we are creating a variable (<code>beginner_flag</code>) that will hold/represent our flag.
+<code>BitVec(f"f{i}", 8)</code> specifies that a custom Z3 datatype known as a <code>BitVec</code> will be created.
+A BitVec is a fixed size integer that will wrap when overflowed. The arguments we pass to the
+function determine the <code>name</code> and <code>fixed size</code> of the <code>BitVec variable</code> that we create. In this
+case, we create a variable with a formatted naming pattern and an <code>8-bit</code> size. Then we loop through
+this function call <code>MAX_FLAG_LEN</code> times, which is 16. At the end, <code>beginner_flag</code> will hold 16 <code>8-bit</code>
+BitVec integers in a list, representing each character of our flag.
+<ul>
+<li><code>beginner_flag = [f0, f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14, f15]</code>.</li>
+<li><code>beginner_solver = Solver()</code> is just creating an instance of the solver object that will hold
+all our constraints and rules for the mathematical operation we do. So when we come up with rules
+or constraints, we will have to <code>.add()</code> them to <code>beginner_solver</code>.
+<br>
+<br></li>
+</ul>
+</li>
+<li>The following code will go through four <code>32-bit</code> chunks, iterate through all 16 characters,
+perform the <code>SHUFFLE</code> operations, perform <code>ADD32</code> operations on each chunk, and store the result for
+further work. <code>MAX_FLAG_LEN</code> and <code>CHUNK_SIZE</code> are equal to <code>16</code> and <code>4</code>
+<ul>
+<li>
+<pre><code class="language-python">for chunk in range(0, MAX_FLAG_LEN, CHUNK_SIZE):
+    piece0, piece1, piece2, piece3 = (beginner_flag[SHUFFLE_MASK[chunk + i]] for i in range(4))
+    joined_chunk = Concat(piece3, piece2, piece1, piece0)
+    add32_chunk = int.from_bytes(bytes(ADD32_VALUES[chunk:chunk + 4]), "little")
+    add32_result = joined_chunk + BitVecVal(add32_chunk, 32)
+</code></pre>
+</li>
+</ul>
+</li>
+<li>This <code>for</code> loop will run 4 times exactly. One time for each <code>32-bit</code> chunk.
+<ul>
+<li>The first line of the loop is a way of assigning four variables values in a single line,
+rather than having an expanded loop to do it, each <code>piece</code> will be assigned <code>beginner_flag[SHUFFLE_MASK[chunk + i]]</code>.
+The operation on the first iteration would look like <code>piece0 = beginner_flag[SHUFFLE_MASK[0 + 0]</code> –&gt;
+<code>piece0 = beginner_flag[0x02]</code> –&gt; <code>piece0 = f2</code>. This would be repeated 4 times each iteration of the loop, for a total
+of 16. The model/equation will be solving for <code>f0-f15</code>.</li>
+</ul>
+</li>
+<li>Next, we must get ready for the <code>ADD32</code> operations those four pieces will be joined together by the
+<code>Concat()</code> function into a single <code>32-bit</code> BitVec integer. <code>joined_chunk</code> will hold that shuffled and
+combined chunk.</li>
+<li>Going off the example of the first iteration and following <code>PEMDAS</code>, <code>ADD32_VALUES[0:0 + 4])</code> will
+grab four characters from our <code>ADD32</code> values table, convert that <code>32-bit</code> chunk to a little-endian bytes
+object, and then convert it from bytes into an integer. That result will get sored in <code>add32_chunk</code>.</li>
+<li>The final line will finally add our shuffled bytes together. But first it must make sure both
+<code>32-bit</code> chunks are BitVec datatypes using <code>BitVecVal()</code>. Now all that’s left is the <code>XOR</code> operation.
+<br>
+<br></li>
+<li>The following code shows us extracting each byte of a given chunk stored in <code>add32_result</code> and
+adding a rule to the solver that the specific byte XORed with the corresponding mask must be the same
+as the original value in <code>beginner_flag</code>.
+<ul>
+<li>
+<pre><code class="language-python">for i in range(4):
+    potential_byte = Extract(8 * i + 7, 8 * i, add32_result)
+    beginner_solver.add((potential_byte ^ XOR_MASK[chunk + i]) == beginner_flag[chunk + i])
+
+</code></pre>
+</li>
+<li>On the first iteration: <code>potential_byte = Extract(7, 0, add32_result)</code>.</li>
+<li>Because <code>chunk</code> and <code>i</code> will correspond to each place in the flag, we can add the rule to solver
+that for each <code>8-bit</code> char we extract and <code>XOR</code>, the char stored in <code>beginner_flag[chunk + i]</code> must
+match. This is the solution right here. The char put in must somehow survive the transformation.
+<code>beginner_solver.add(potential_byte ^ XOR_MASK[0]) == beginner_flag[0]</code>, This also does the XOR without
+us actually having to carry out the operation ourselves. Instead, Z3 will do it as part of its rule set.
+<br>
+<br></li>
+</ul>
+</li>
+<li>The following code appears after the previous for loop closes.
+<ul>
+<li>
+<pre><code class="language-python">def solver_builder():
+    ...
+    ...
+    for i, ch in enumerate(b"CTF{"):
+            beginner_solver.add(beginner_flag[i] == ch)
+    beginner_solver.add(beginner_flag[15] == 0)
+    
+    for i in range(4, 14):
+        beginner_solver.add(beginner_flag[i] &gt;= 0x20, beginner_flag[i] &lt;= 0x7e)
+  
+    return beginner_solver, beginner_flag
+</code></pre>
+</li>
+</ul>
+</li>
+<li>The first loop adds the known characters of <code>CTF{</code> to the solver as rules. You could manually do this
+as four separate statements at the indexes of <code>0</code>, <code>1</code>, <code>2</code>, and <code>3</code>. Then, we add that the 15th
+character is equal to <code>\0</code>, which is the same as <code>0x00</code> or <code>0</code>. This serves as adding
+known variables to a mathematical equation. Allowing systems of equations to help Z3 find the answer.</li>
+<li>The second loop adds a rule that every single character in our flag must be within the printable ASCII range.
+A rule is added for every index from 4 to 14 because those are the characters we don’t already know.</li>
+<li>Finally, we return the <code>beginner_solver</code> and <code>beginner_flag</code> that we configured.
+<br>
+<br></li>
+<li>The following code appears after the previous for loop closes.
+<ul>
+<li>
+<pre><code class="language-python">def main():
+  beginner_solver, beginner_flag = solver_builder()
+  while beginner_solver.check() == sat:
+      beginner_model = beginner_solver.model()
+      beginner_values = [beginner_model[f].as_long() for f in beginner_flag]
+      print(bytes(beginner_values[:-1]).decode())
+      beginner_solver.add(Or([f != v for f, v in zip(beginner_flag, beginner_values)]))
+</code></pre>
+</li>
+</ul>
+</li>
+<li>We call the <code>solver_builder()</code> function we built, configuring all the operations we did, adding
+rules to the Z3 solver, etc.</li>
+<li><code>beginner_solver.check()</code> is the command that checks for a solution to everything we set up.
+<code>sat</code> gets returned if a satisfiable solution has been reached. So, we keep running the solver,
+until all satisfiable solutions has been found and <code>unsat</code> is returned. Z3 will look for and find a mathematical solution or
+<code>model</code> that satisfies the equation we set up. Keep in mind, Z3 uses the term <code>model</code> differently
+than how it is used in math and physics. A model in Z3 means the set of specific values assigned to
+specific variables that causes the equation to evaluate as <code>satisfiable</code>.</li>
+<li>When we call <code>.model()</code> we are retrieving the list of answers from the solver.</li>
+<li>Because Z3 uses its own datatypes for variables, we have to retrieve them from the model and convert
+them into something python understands. So, for each item in <code>beginner_flag</code> <code>f0-f15</code>, we grab a value
+from our answer lookup table (<code>beginner_model</code>) at an incrementing index. Then, we convert what we
+pulled to an <code>int</code>. <code>int</code> used to be called <code>long</code> in older python versions. All these converted
+values get stored in <code>beginner_values</code>.</li>
+<li>Next we <code>print</code> the solution in ASCII. To do this, we convert all the <code>int</code> values into bytes
+and then decode them into <code>UTF-8</code> characters. The <code>-1</code> is to ignore the null terminator at the end.
+Python doesn’t use null terminators like C does.</li>
+<li>The last line’s aim is to make sure we can check to see if any other solutions exist. This helps us
+make sure that we have all the satisfiable characters. Z3 will give us the first satisfiable values
+it finds. So, we add a new rule to our solver using <code>Or</code>. first, our flag and values get zipped into
+a list of tuples <code>('f15', 0)</code>. Then for each <code>f</code> and <code>v</code> in each tuple, we assert that our flag
+character <code>f{i}</code> cannot be equal to the current value stored in the model: <code>f15 != 0</code>. This loop
+creates a series of conditions that culminate to mean that any value the solver found for our characters
+is no longer allowed to be the answer. This gets wrapped in a Z3 Or function. The Or function will
+evaluate as true if any single character in a new solution is not equal to the value in previous
+solutions. Then, the loop repeats. If mathematically there can be no other solutions that satisfy
+the newly added Or constraint, meaning no other possible values exist that can satisfy any of our <code>f{i}</code>
+characters, the <code>.check()</code> method will return <code>unsat</code>. Otherwise, other possible flags will get printed in
+succession.</li>
+</ul>
+<br>
+<br>
+<h4 id="solve-script"><a class="header" href="#solve-script">Solve Script</a></h4>
+<ul>
+<li>
+<pre><code class="language-python">from z3 import BitVec, BitVecVal, Concat, Extract, Solver, Or, sat
+  
+MAX_FLAG_LEN = 16
+CHUNK_SIZE= 4
+XOR_MASK = [0x76, 0x58, 0xb4, 0x49, 0x8d, 0x1a, 0x5f, 0x38, 0xd4, 0x23, 0xf8, 0x34, 0xeb, 0x86, 0xf9, 0xaa]
+ADD32_VALUES = [0xef, 0xbe, 0xad, 0xde, 0xad, 0xde, 0xe1, 0xfe, 0x37, 0x13, 0x37, 0x13, 0x66, 0x74, 0x63, 0x67]
+SHUFFLE_MASK = [0x02, 0x06, 0x07, 0x01, 0x05, 0x0b, 0x09, 0x0e, 0x03, 0x0f, 0x04, 0x08, 0x0a, 0x0c, 0x0d, 0x00]
+
+def solver_builder():
+
+    beginner_flag = [BitVec(f"f{i}", 8) for i in range(MAX_FLAG_LEN)]
+    beginner_solver = Solver()
+
+    for chunk in range(0, MAX_FLAG_LEN, CHUNK_SIZE):
+        piece0, piece1, piece2, piece3 = (beginner_flag[SHUFFLE_MASK[chunk + i]] for i in range(4))
+        joined_chunk = Concat(piece3, piece2, piece1, piece0)
+        add32_chunk = int.from_bytes(bytes(ADD32_VALUES[chunk:chunk + 4]), "little")
+        add32_result = joined_chunk + BitVecVal(add32_chunk, 32)
+  
+        for i in range(4):
+            potential_byte = Extract(8 * i + 7, 8 * i, add32_result)
+            beginner_solver.add((potential_byte ^ XOR_MASK[chunk + i]) == beginner_flag[chunk + i])
+  
+    for i, ch in enumerate(b"CTF{"):
+        beginner_solver.add(beginner_flag[i] == ch)
+    beginner_solver.add(beginner_flag[15] == 0)
+  
+    for i in range(4, 14):
+        beginner_solver.add(beginner_flag[i] &gt;= 0x20, beginner_flag[i] &lt;= 0x7e)
+  
+    return beginner_solver, beginner_flag
+
+def main():
+    beginner_solver, beginner_flag = solver_builder()
+    while beginner_solver.check() == sat:
+        beginner_model = beginner_solver.model()
+        beginner_values = [beginner_model[f].as_long() for f in beginner_flag]
+        print(bytes(beginner_values[:-1]).decode())
+        beginner_solver.add(Or([f != v for f, v in zip(beginner_flag, beginner_values)]))
+
+
+if __name__ == "__main__": main()
+</code></pre>
+</li>
+</ul>
+<h4 id="results"><a class="header" href="#results">Results</a></h4>
+<p>After running the script, we get the flag. Putting the flag into the binary gives us <code>SUCCESS</code>!</p>
+<ul>
+<li>
+<p><label class="checkbox-label"><input class="checkbox-img" type="checkbox"><img src="img_9.png" alt="img_9.png"><span class="img-wrapper"><img src="img_9.png" alt="img_9.png"></span></label></p>
+</li>
+<li>
+<p><label class="checkbox-label"><input class="checkbox-img" type="checkbox"><img src="img_8.png" alt="img_8.png"><span class="img-wrapper"><img src="img_8.png" alt="img_8.png"></span></label></p>
+</li>
 </ul>
 <hr>
 <h2 id="conclusion"><a class="header" href="#conclusion">Conclusion</a></h2>
-<p>Generative AI was used for:</p>
-<ul>
-<li><code>Debugging</code> Print</li>
-</ul>
+<p>This being my first cryptography-related CTF threw my for a loop, resulting in this CTF taking a
+lot longer than intended. However, I learned a lot, while being forced to freshen up my Python.
+Overall, it was a good experience.</p>
+<h4 id="lessons-learned"><a class="header" href="#lessons-learned">Lessons Learned</a></h4>
+<ol>
+<li>Make sure you are able to manually write out and understand the transformations.</li>
+<li>Utilize GDB to check to see if hypothesized transformations are consistent with your understanding.</li>
+</ol>
 <hr>
                     </main>
 
